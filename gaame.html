@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Волчонок — Чемпион</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #581c87 50%, #312e81 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Меню */
+        .menu-container {
+            text-align: center;
+            color: white;
+            max-width: 600px;
+        }
+
+        .game-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px rgba(255,255,255,0.5);
+        }
+
+        .game-subtitle {
+            font-size: 1.25rem;
+            color: #bfdbfe;
+            margin-bottom: 40px;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .high-score {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .trophy-icon {
+            font-size: 1.8rem;
+        }
+
+        .instructions {
+            text-align: left;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 2;
+        }
+
+        .instructions p {
+            margin: 5px 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.95);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            color: white;
+        }
+
+        .btn-sound {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            padding: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .btn-sound:hover {
+            color: white;
+        }
+
+        /* Игровой экран */
+        #game-screen {
+            position: relative;
+            width: 100%;
+        }
+
+        .scoreboard {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .score-item {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            font-size: 1.5rem;
+        }
+
+        .heart {
+            font-size: 1.3rem;
+        }
+
+        .heart.filled {
+            color: #ef4444;
+        }
+
+        .heart.empty {
+            color: #6b7280;
+        }
+
+        #game-canvas {
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            max-width: 100%;
+            height: auto;
+        }
+
+        .hint {
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 20px;
+            font-size: 1rem;
+        }
+
+        /* Game Over экран */
+        .gameover-container {
+            text-align: center;
+            color: white;
+            max-width: 600px;
+        }
+
+        .gameover-title {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px rgba(255,0,0,0.5);
+        }
+
+        .new-record {
+            font-size: 1.5rem;
+            color: #fbbf24;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .new-record.hidden {
+            display: none;
+        }
+
+        .stats-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.5rem;
+            margin: 15px 0;
+        }
+
+        .stat-row.border-top {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-value {
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 2rem;
+            }
+
+            .scoreboard {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn-primary {
+                font-size: 1.2rem;
+                padding: 12px 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Экран меню -->
+    <div id="menu-screen" class="screen active">
+        <div class="menu-container">
+            <h1 class="game-title">⚽ Волчонок — Чемпион</h1>
+            <p class="game-subtitle">Собирай мячи и избегай соперников!</p>
+
+            <div class="info-panel">
+                <div class="high-score">
+                    <span class="trophy-icon">🏆</span>
+                    <span>Рекорд: <span id="high-score">0</span></span>
+                </div>
+
+                <div class="instructions">
+                    <p>🎮 Управление: WASD или стрелки</p>
+                    <p>⚽ Белые мячи: +10 очков</p>
+                    <p>⭐ Золотые звёзды: +50 очков</p>
+                    <p>🛡️ Синие бонусы: щит</p>
+                    <p>⚡ Фиолетовые бонусы: скорость</p>
+                    <p>❤️ У тебя 3 жизни</p>
+                </div>
+            </div>
+
+            <button id="start-btn" class="btn-primary">Начать игру!</button>
+            <button id="sound-toggle" class="btn-sound">
+                <span id="sound-icon">🔊</span>
+                <span id="sound-text">Звук вкл</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Экран игры -->
+    <div id="game-screen" class="screen">
+        <div class="scoreboard">
+            <div class="score-item">
+                <span class="icon">⭐</span>
+                <span id="score">0</span>
+            </div>
+
+            <div class="score-item">
+                <span id="lives-display">
+                    <span class="heart filled">❤️</span>
+                    <span class="heart filled">❤️</span>
+                    <span class="heart filled">❤️</span>
+                </span>
+            </div>
+
+            <div class="score-item">
+                <span class="icon">⏱️</span>
+                <span id="time">0</span>s
+            </div>
+        </div>
+
+        <canvas id="game-canvas" width="1000" height="600"></canvas>
+        <div class="hint">Используй WASD или стрелки для движения</div>
+    </div>
+
+    <!-- Экран Game Over -->
+    <div id="gameover-screen" class="screen">
+        <div class="gameover-container">
+            <h1 class="gameover-title">Игра окончена!</h1>
+            <p id="new-record" class="new-record hidden">🎉 Новый рекорд! 🎉</p>
+
+            <div class="stats-panel">
+                <div class="stat-row">
+                    <span class="stat-label">⭐ Очки:</span>
+                    <span id="final-score" class="stat-value">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">⏱️ Время:</span>
+                    <span id="final-time" class="stat-value">0s</span>
+                </div>
+                <div class="stat-row border-top">
+                    <span class="stat-label">🏆 Рекорд:</span>
+                    <span id="final-high-score" class="stat-value">0</span>
+                </div>
+            </div>
+
+            <button id="restart-btn" class="btn-primary">Играть снова</button>
+            <button id="menu-btn" class="btn-secondary">Вернуться в меню</button>
+        </div>
+    </div>
+
+    <script>
+        // Глобальные переменные
+        let canvas, ctx;
+        let gameState = 'menu'; // 'menu', 'playing', 'gameover'
+        let score = 0;
+        let lives = 3;
+        let time = 0;
+        let highScore = 0;
+        let soundEnabled = true;
+        let animationId;
+
+        // Игровые объекты
+        const game = {
+            player: { x: 500, y: 300, size: 40, speed: 4, vx: 0, vy: 0 },
+            balls: [],
+            enemies: [],
+            particles: [],
+            difficulty: 1,
+            invincible: 0,
+            speedBoost: 0,
+            keys: {}
+        };
+
+        let localScore = 0;
+        let localLives = 3;
+        let localTime = 0;
+        let lastDifficultyIncrease = 0;
+
+        // Инициализация
+        window.onload = () => {
+            canvas = document.getElementById('game-canvas');
+            ctx = canvas.getContext('2d');
+
+            // Загрузка рекорда
+            const saved = localStorage.getItem('wolfChampionHighScore');
+            if (saved) {
+                highScore = parseInt(saved);
+                document.getElementById('high-score').textContent = highScore;
+            }
+
+            // Обработчики событий
+            document.getElementById('start-btn').addEventListener('click', startGame);
+            document.getElementById('restart-btn').addEventListener('click', startGame);
+            document.getElementById('menu-btn').addEventListener('click', showMenu);
+            document.getElementById('sound-toggle').addEventListener('click', toggleSound);
+
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
+        };
+
+        // Переключение звука
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
+            document.getElementById('sound-text').textContent = soundEnabled ? 'Звук вкл' : 'Звук выкл';
+        }
+
+        // Показать меню
+        function showMenu() {
+            gameState = 'menu';
+            document.getElementById('menu-screen').classList.add('active');
+            document.getElementById('game-screen').classList.remove('active');
+            document.getElementById('gameover-screen').classList.remove('active');
+        }
+
+        // Начать игру
+        function startGame() {
+            gameState = 'playing';
+            score = 0;
+            lives = 3;
+            time = 0;
+            localScore = 0;
+            localLives = 3;
+            localTime = 0;
+            lastDifficultyIncrease = 0;
+
+            // Сброс игровых объектов
+            game.player = { x: 500, y: 300, size: 40, speed: 4, vx: 0, vy: 0 };
+            game.balls = [];
+            game.enemies = [];
+            game.particles = [];
+            game.difficulty = 1;
+            game.invincible = 0;
+            game.speedBoost = 0;
+            game.keys = {};
+
+            // Начальные объекты
+            for (let i = 0; i < 3; i++) spawnBall();
+            spawnEnemy();
+
+            // Обновление UI
+            updateScore();
+            updateLives();
+            updateTime();
+
+            // Переключение экранов
+            document.getElementById('menu-screen').classList.remove('active');
+            document.getElementById('game-screen').classList.add('active');
+            document.getElementById('gameover-screen').classList.remove('active');
+
+            // Запуск игрового цикла
+            gameLoop();
+        }
+
+        // Обработка клавиш
+        function handleKeyDown(e) {
+            game.keys[e.key.toLowerCase()] = true;
+        }
+
+        function handleKeyUp(e) {
+            game.keys[e.key.toLowerCase()] = false;
+        }
+
+        // Создание мяча
+        function spawnBall() {
+            const isBonus = Math.random() < 0.15;
+            const bonusTypes = ['star', 'shield', 'speed'];
+            const bonusType = isBonus ? bonusTypes[Math.floor(Math.random() * 3)] : null;
+
+            game.balls.push({
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: Math.random() * (canvas.height - 40) + 20,
+                size: bonusType ? 35 : 25,
+                points: bonusType ? 50 : 10,
+                bonus: bonusType
+            });
+        }
+
+        // Создание противника
+        function spawnEnemy() {
+            const side = Math.floor(Math.random() * 4);
+            let x, y;
+
+            switch(side) {
+                case 0: x = -30; y = Math.random() * canvas.height; break;
+                case 1: x = canvas.width + 30; y = Math.random() * canvas.height; break;
+                case 2: x = Math.random() * canvas.width; y = -30; break;
+                default: x = Math.random() * canvas.width; y = canvas.height + 30;
+            }
+
+            const angle = Math.atan2(game.player.y - y, game.player.x - x);
+            const speed = 1.5 + game.difficulty * 0.3;
+
+            game.enemies.push({
+                x, y,
+                size: 35,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed
+            });
+        }
+
+        // Создание частиц
+        function createParticles(x, y, color, count = 8) {
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 * i) / count;
+                game.particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * 3,
+                    vy: Math.sin(angle) * 3,
+                    life: 30,
+                    color,
+                    size: 5
+                });
+            }
+        }
+
+        // Звуковые эффекты
+        function playSound(frequency, duration, type = 'sine') {
+            if (!soundEnabled) return;
+
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        // Обновление UI
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+        }
+
+        function updateLives() {
+            const livesDisplay = document.getElementById('lives-display');
+            livesDisplay.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                const heart = document.createElement('span');
+                heart.className = i < lives ? 'heart filled' : 'heart empty';
+                heart.textContent = '❤️';
+                livesDisplay.appendChild(heart);
+            }
+        }
+
+        function updateTime() {
+            document.getElementById('time').textContent = time;
+        }
+
+        // Игровой цикл
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+
+            localTime += 1/60;
+            time = Math.floor(localTime);
+
+            // Обновление табло каждые 10 кадров
+            if (Math.floor(localTime * 60) % 10 === 0) {
+                updateTime();
+            }
+
+            // Увеличение сложности каждые 30 секунд
+            if (Math.floor(localTime) > lastDifficultyIncrease && Math.floor(localTime) % 30 === 0) {
+                game.difficulty += 0.5;
+                lastDifficultyIncrease = Math.floor(localTime);
+                playSound(800, 0.2, 'square');
+            }
+
+            // Управление игроком
+            game.player.vx = 0;
+            game.player.vy = 0;
+
+            const speed = game.player.speed * (game.speedBoost > 0 ? 1.5 : 1);
+
+            if (game.keys['w'] || game.keys['arrowup']) game.player.vy = -speed;
+            if (game.keys['s'] || game.keys['arrowdown']) game.player.vy = speed;
+            if (game.keys['a'] || game.keys['arrowleft']) game.player.vx = -speed;
+            if (game.keys['d'] || game.keys['arrowright']) game.player.vx = speed;
+
+            // Нормализация диагонального движения
+            if (game.player.vx !== 0 && game.player.vy !== 0) {
+                game.player.vx *= 0.707;
+                game.player.vy *= 0.707;
+            }
+
+            game.player.x += game.player.vx;
+            game.player.y += game.player.vy;
+
+            // Границы поля
+            const fieldPadding = 20;
+            game.player.x = Math.max(game.player.size + fieldPadding, Math.min(canvas.width - game.player.size - fieldPadding, game.player.x));
+            game.player.y = Math.max(game.player.size + fieldPadding, Math.min(canvas.height - game.player.size - fieldPadding, game.player.y));
+
+            // Обновление противников
+            for (let i = game.enemies.length - 1; i >= 0; i--) {
+                const enemy = game.enemies[i];
+                enemy.x += enemy.vx;
+                enemy.y += enemy.vy;
+
+                // Удаление за границами
+                if (enemy.x < -50 || enemy.x > canvas.width + 50 || enemy.y < -50 || enemy.y > canvas.height + 50) {
+                    game.enemies.splice(i, 1);
+                    continue;
+                }
+
+                // Проверка столкновения с игроком
+                const dx = game.player.x - enemy.x;
+                const dy = game.player.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < game.player.size + enemy.size - 10) {
+                    if (game.invincible === 0) {
+                        localLives--;
+                        lives = localLives;
+                        updateLives();
+                        game.invincible = 120;
+                        createParticles(game.player.x, game.player.y, '#ff4444', 12);
+                        playSound(200, 0.3, 'sawtooth');
+
+                        if (localLives <= 0) {
+                            endGame();
+                            return;
+                        }
+                    }
+                    game.enemies.splice(i, 1);
+                }
+            }
+
+            // Обновление мячей
+            for (let i = game.balls.length - 1; i >= 0; i--) {
+                const ball = game.balls[i];
+                const dx = game.player.x - ball.x;
+                const dy = game.player.y - ball.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < game.player.size + ball.size - 10) {
+                    localScore += ball.points;
+                    score = localScore;
+                    updateScore();
+                    createParticles(ball.x, ball.y, ball.bonus ? '#ffd700' : '#00ff88', 10);
+
+                    if (ball.bonus === 'shield') {
+                        game.invincible = 180;
+                        playSound(600, 0.2, 'sine');
+                    } else if (ball.bonus === 'speed') {
+                        game.speedBoost = 180;
+                        playSound(700, 0.2, 'triangle');
+                    } else if (ball.bonus === 'star') {
+                        playSound(900, 0.2, 'square');
+                    } else {
+                        playSound(440, 0.1, 'sine');
+                    }
+
+                    game.balls.splice(i, 1);
+                    spawnBall();
+                }
+            }
+
+            // Спавн противников
+            if (Math.random() < 0.01 + game.difficulty * 0.005) {
+                spawnEnemy();
+            }
+
+            // Обновление бонусов
+            if (game.invincible > 0) game.invincible--;
+            if (game.speedBoost > 0) game.speedBoost--;
+
+            // Обновление частиц
+            for (let i = game.particles.length - 1; i >= 0; i--) {
+                const particle = game.particles[i];
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life--;
+                if (particle.life <= 0) {
+                    game.particles.splice(i, 1);
+                }
+            }
+
+            // Отрисовка
+            render();
+
+            // Следующий кадр
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // Отрисовка
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Фон футбольного поля
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#2d5f3f');
+            gradient.addColorStop(1, '#1a4029');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Разметка поля
+            ctx.strokeStyle = '#ffffff44';
+            ctx.lineWidth = 2;
+
+            // Центральный круг
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 80, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Центральная линия
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+
+            // Штрафные зоны
+            ctx.strokeRect(20, canvas.height / 2 - 100, 100, 200);
+            ctx.strokeRect(canvas.width - 120, canvas.height / 2 - 100, 100, 200);
+
+            // Частицы
+            game.particles.forEach(particle => {
+                const alpha = Math.floor((particle.life / 30) * 255).toString(16).padStart(2, '0');
+                ctx.fillStyle = particle.color + alpha;
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Мячи
+            game.balls.forEach(ball => {
+                if (ball.bonus) {
+                    const t = Date.now() / 1000;
+                    ctx.save();
+                    ctx.shadowColor = ball.bonus === 'shield' ? '#00ffff' : ball.bonus === 'speed' ? '#ff00ff' : '#ffff00';
+                    ctx.shadowBlur = 15 + Math.sin(t * 5) * 5;
+
+                    ctx.fillStyle = ball.bonus === 'shield' ? '#00ddff' : ball.bonus === 'speed' ? '#ff00dd' : '#ffdd00';
+                    ctx.beginPath();
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2 + t;
+                        const x = ball.x + Math.cos(angle) * ball.size;
+                        const y = ball.y + Math.sin(angle) * ball.size;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                } else {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#000000';
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (i * Math.PI * 2) / 5;
+                        ctx.beginPath();
+                        ctx.arc(
+                            ball.x + Math.cos(angle) * ball.size * 0.4,
+                            ball.y + Math.sin(angle) * ball.size * 0.4,
+                            ball.size * 0.3,
+                            0,
+                            Math.PI * 2
+                        );
+                        ctx.fill();
+                    }
+                }
+            });
+
+            // Противники
+            game.enemies.forEach(enemy => {
+                ctx.save();
+                ctx.fillStyle = '#cc0000';
+                ctx.shadowColor = '#ff0000';
+                ctx.shadowBlur = 10;
+
+                ctx.beginPath();
+                ctx.arc(enemy.x, enemy.y, enemy.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(enemy.x - 10, enemy.y - 5, 6, 0, Math.PI * 2);
+                ctx.arc(enemy.x + 10, enemy.y - 5, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(enemy.x - 10, enemy.y - 5, 3, 0, Math.PI * 2);
+                ctx.arc(enemy.x + 10, enemy.y - 5, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            });
+
+            // Игрок (волчонок)
+            ctx.save();
+
+            if (game.invincible > 0) {
+                if (Math.floor(game.invincible / 10) % 2 === 0) {
+                    ctx.globalAlpha = 0.5;
+                }
+                ctx.shadowColor = '#00ffff';
+                ctx.shadowBlur = 15;
+            }
+
+            if (game.speedBoost > 0) {
+                ctx.shadowColor = '#ff00ff';
+                ctx.shadowBlur = 15;
+            }
+
+            ctx.fillStyle = '#6699cc';
+            ctx.beginPath();
+            ctx.arc(game.player.x, game.player.y, game.player.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#5588bb';
+            ctx.beginPath();
+            ctx.arc(game.player.x - 20, game.player.y - 25, 12, 0, Math.PI * 2);
+            ctx.arc(game.player.x + 20, game.player.y - 25, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(game.player.x - 12, game.player.y - 8, 8, 0, Math.PI * 2);
+            ctx.arc(game.player.x + 12, game.player.y - 8, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(game.player.x - 12, game.player.y - 8, 4, 0, Math.PI * 2);
+            ctx.arc(game.player.x + 12, game.player.y - 8, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(game.player.x, game.player.y + 5, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(game.player.x, game.player.y + 5, 15, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // Конец игры
+        function endGame() {
+            gameState = 'gameover';
+            cancelAnimationFrame(animationId);
+
+            // Обновление рекорда
+            if (localScore > highScore) {
+                highScore = localScore;
+                localStorage.setItem('wolfChampionHighScore', highScore.toString());
+                document.getElementById('high-score').textContent = highScore;
+                document.getElementById('new-record').classList.remove('hidden');
+            } else {
+                document.getElementById('new-record').classList.add('hidden');
+            }
+
+            // Обновление статистики
+            document.getElementById('final-score').textContent = localScore;
+            document.getElementById('final-time').textContent = time + 's';
+            document.getElementById('final-high-score').textContent = highScore;
+
+            // Переключение экранов
+            document.getElementById('game-screen').classList.remove('active');
+            document.getElementById('gameover-screen').classList.add('active');
+        }
+    </script>
+</body>
+</html>
