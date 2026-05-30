@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Волчонок — Чемпион</title>
     <style>
         * {
@@ -193,11 +196,13 @@
         }
 
         #game-canvas {
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            max-width: 100%;
-            height: auto;
-        }
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    border-radius: 0;
+    max-width: none;
+    box-shadow: none;
+}
 
         .hint {
             color: rgba(255, 255, 255, 0.6);
@@ -332,7 +337,7 @@
             </div>
         </div>
 
-        <canvas id="game-canvas" width="1000" height="600"></canvas>
+        <canvas id="game-canvas"></canvas>
         <div class="hint">Используй WASD или стрелки для движения</div>
     </div>
 
@@ -390,6 +395,20 @@
         let localTime = 0;
         let lastDifficultyIncrease = 0;
 
+        let touchX = 0;
+let touchY = 0;
+
+canvas?.addEventListener('touchstart', handleTouch);
+canvas?.addEventListener('touchmove', handleTouch);
+
+function handleTouch(e) {
+    e.preventDefault();
+
+    const rect = canvas.getBoundingClientRect();
+    touchX = e.touches[0].clientX - rect.left;
+    touchY = e.touches[0].clientY - rect.top;
+}
+
         // Инициализация
         window.onload = () => {
             canvas = document.getElementById('game-canvas');
@@ -418,7 +437,10 @@
             document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
             document.getElementById('sound-text').textContent = soundEnabled ? 'Звук вкл' : 'Звук выкл';
         }
-
+                function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+            }
         // Показать меню
         function showMenu() {
             gameState = 'menu';
@@ -603,7 +625,16 @@
                 game.player.vx *= 0.707;
                 game.player.vy *= 0.707;
             }
+            if (touchX || touchY) {
+    const dx = touchX - game.player.x;
+    const dy = touchY - game.player.y;
+    const dist = Math.hypot(dx, dy);
 
+    if (dist > 10) {
+        game.player.vx = (dx / dist) * speed;
+        game.player.vy = (dy / dist) * speed;
+    }
+}
             game.player.x += game.player.vx;
             game.player.y += game.player.vy;
 
